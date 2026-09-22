@@ -15,4 +15,6 @@ public class User
     public string City { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+
+    public ICollection<Product> Products { get; set; } = new List<Product>();
 }

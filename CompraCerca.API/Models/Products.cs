@@ -1,20 +1,24 @@
-﻿namespace CompraCerca.API.Models;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-public class Product
+namespace CompraCerca.API.Models
 {
-    public int Id { get; set; }
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
-    public string Title { get; set; } = string.Empty;
+        // Le indicamos explícitamente a SQL Server: 18 dígitos totales, 2 decimales
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
 
-    public string Description { get; set; } = string.Empty;
+        public int CategoryId { get; set; }
+        public Category Category { get; set; } = null!;
 
-    public decimal Price { get; set; }
+        public int UserId { get; set; }
+        public User User { get; set; } = null!;
 
-    public int CategoryId { get; set; }
-
-    public int UserId { get; set; }
-
-    public string City { get; set; } = string.Empty;
-
-    public bool IsActive { get; set; } = true;
+        public string City { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+    }
 }
