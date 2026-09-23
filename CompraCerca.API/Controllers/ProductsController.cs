@@ -1,4 +1,5 @@
 ﻿using CompraCerca.API.Data;
+using CompraCerca.API.DTOs;
 using CompraCerca.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,20 +17,32 @@ namespace CompraCerca.API.Controllers
             _context = context;
         }
 
-        // GET: api/products
-        // Incluye la información de la Categoría y el Usuario asociados usando .Include()
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<IEnumerable<ProductResponseDto>>> GetProducts()
         {
-            return await _context.Products
+            var products = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.User)
+                .Select(p => new ProductResponseDto
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Price = p.Price,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category.Name,
+                    UserId = p.UserId,
+                    UserName = $"{p.User.FirstName} {p.User.LastName}",
+                    City = p.City,
+                    IsActive = p.IsActive
+                })
                 .ToListAsync();
+
+            return Ok(products);
         }
 
-        // GET: api/products/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<ProductResponseDto>> GetProduct(int id)
         {
             var product = await _context.Products
                 .Include(p => p.Category)
@@ -41,63 +54,103 @@ namespace CompraCerca.API.Controllers
                 return NotFound();
             }
 
-            return product;
+            var productDto = new ProductResponseDto
+            {
+                Id = product.Id,
+                Title = product.Title,
+                Description = product.Description,
+                Price = product.Price,
+                CategoryId = product.CategoryId,
+                CategoryName = product.Category.Name,
+                UserId = product.UserId,
+                UserName = $"{product.User.FirstName} {product.User.LastName}",
+                City = product.City,
+                IsActive = product.IsActive
+            };
+
+            return Ok(productDto);
         }
 
-        // POST: api/products
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<ProductResponseDto>> PostProduct(ProductCreateDto productDto)
         {
-            // Validar que la categoría y el usuario especificados existan en la BD
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == product.CategoryId);
-            if (!categoryExists)
+            var category = await _context.Categories.FindAsync(productDto.CategoryId);
+            if (category == null)
             {
-                return BadRequest($"La categoría con ID {product.CategoryId} no existe.");
+                return BadRequest($"La categoría con ID {productDto.CategoryId} no existe.");
             }
 
-            var userExists = await _context.Users.AnyAsync(u => u.Id == product.UserId);
-            if (!userExists)
+            var user = await _context.Users.FindAsync(productDto.UserId);
+            if (user == null)
             {
-                return BadRequest($"El usuario con ID {product.UserId} no existe.");
+                return BadRequest($"El usuario con ID {productDto.UserId} no existe.");
             }
+
+            var product = new Product
+            {
+                Title = productDto.Title,
+                Description = productDto.Description,
+                Price = productDto.Price,
+                CategoryId = productDto.CategoryId,
+                UserId = productDto.UserId,
+                City = productDto.City,
+                IsActive = productDto.IsActive
+            };
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+            var responseDto = new ProductResponseDto
+            {
+                Id = product.Id,
+                Title = product.Title,
+                Description = product.Description,
+                Price = product.Price,
+                CategoryId = product.CategoryId,
+                CategoryName = category.Name,
+                UserId = product.UserId,
+                UserName = $"{user.FirstName} {user.LastName}",
+                City = product.City,
+                IsActive = product.IsActive
+            };
+
+            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, responseDto);
         }
 
-        // PUT: api/products/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> PutProduct(int id, ProductCreateDto productDto)
         {
-            if (id != product.Id)
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
             {
-                return BadRequest("El ID de la URL no coincide con el ID del producto.");
+                return NotFound();
             }
 
-            _context.Entry(product).State = EntityState.Modified;
+            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == productDto.CategoryId);
+            if (!categoryExists)
+            {
+                return BadRequest($"La categoría con ID {productDto.CategoryId} no existe.");
+            }
 
-            try
+            var userExists = await _context.Users.AnyAsync(u => u.Id == productDto.UserId);
+            if (!userExists)
             {
-                await _context.SaveChangesAsync();
+                return BadRequest($"El usuario con ID {productDto.UserId} no existe.");
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
+            product.Title = productDto.Title;
+            product.Description = productDto.Description;
+            product.Price = productDto.Price;
+            product.CategoryId = productDto.CategoryId;
+            product.UserId = productDto.UserId;
+            product.City = productDto.City;
+            product.IsActive = productDto.IsActive;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        // DELETE: api/products/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
@@ -111,11 +164,6 @@ namespace CompraCerca.API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
         }
     }
 }

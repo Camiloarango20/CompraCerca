@@ -1,4 +1,5 @@
 ﻿using CompraCerca.API.Data;
+using CompraCerca.API.DTOs;
 using CompraCerca.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,68 +17,96 @@ namespace CompraCerca.API.Controllers
             _context = context;
         }
 
-        // GET: api/users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _context.Users
+                .Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Email = u.Email,
+                    City = u.City,
+                    IsActive = u.IsActive
+                })
+                .ToListAsync();
+
+            return Ok(users);
         }
 
-        // GET: api/users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserResponseDto>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
-
             if (user == null)
             {
                 return NotFound();
             }
 
-            return user;
+            var userDto = new UserResponseDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                City = user.City,
+                IsActive = user.IsActive
+            };
+
+            return Ok(userDto);
         }
 
-        // POST: api/users
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<UserResponseDto>> PostUser(UserCreateDto userDto)
         {
+            var user = new User
+            {
+                FirstName = userDto.FirstName,
+                LastName = userDto.LastName,
+                Email = userDto.Email,
+                PasswordHash = userDto.Password, // Nota: Se implementará hashing en fases posteriores
+                City = userDto.City,
+                IsActive = userDto.IsActive
+            };
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+            var responseDto = new UserResponseDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                City = user.City,
+                IsActive = user.IsActive
+            };
+
+            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, responseDto);
         }
 
-        // PUT: api/users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(int id, UserCreateDto userDto)
         {
-            if (id != user.Id)
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
             {
-                return BadRequest("El ID de la URL no coincide con el ID del usuario.");
+                return NotFound();
             }
 
-            _context.Entry(user).State = EntityState.Modified;
+            user.FirstName = userDto.FirstName;
+            user.LastName = userDto.LastName;
+            user.Email = userDto.Email;
+            user.PasswordHash = userDto.Password;
+            user.City = userDto.City;
+            user.IsActive = userDto.IsActive;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        // DELETE: api/users/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -91,11 +120,6 @@ namespace CompraCerca.API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.Id == id);
         }
     }
 }

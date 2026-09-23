@@ -1,4 +1,5 @@
 ﻿using CompraCerca.API.Data;
+using CompraCerca.API.DTOs;
 using CompraCerca.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,17 +18,26 @@ namespace CompraCerca.API.Controllers
         }
 
         // GET: api/categories
-        // Obtiene todas las categorías de la base de datos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<CategoryResponseDto>>> GetCategories()
         {
-            return await _context.Categories.ToListAsync();
+            // Mapeamos la lista de entidades a una lista de DTOs de respuesta
+            var categories = await _context.Categories
+                .Select(c => new CategoryResponseDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description,
+                    IsActive = c.IsActive
+                })
+                .ToListAsync();
+
+            return Ok(categories);
         }
 
         // GET: api/categories/5
-        // Obtiene una categoría por su ID
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategory(int id)
+        public async Task<ActionResult<CategoryResponseDto>> GetCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);
 
@@ -36,53 +46,64 @@ namespace CompraCerca.API.Controllers
                 return NotFound();
             }
 
-            return category;
+            var categoryDto = new CategoryResponseDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Description = category.Description,
+                IsActive = category.IsActive
+            };
+
+            return Ok(categoryDto);
         }
 
         // POST: api/categories
-        // Crea una nueva categoría
         [HttpPost]
-        public async Task<ActionResult<Category>> PostCategory(Category category)
+        public async Task<ActionResult<CategoryResponseDto>> PostCategory(CategoryCreateDto categoryDto)
         {
+            // Mapeamos del DTO de entrada a la entidad de Base de Datos
+            var category = new Category
+            {
+                Name = categoryDto.Name,
+                Description = categoryDto.Description,
+                IsActive = categoryDto.IsActive
+            };
+
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+            // Mapeamos la entidad guardada a un DTO de respuesta
+            var responseDto = new CategoryResponseDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Description = category.Description,
+                IsActive = category.IsActive
+            };
+
+            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, responseDto);
         }
 
         // PUT: api/categories/5
-        // Actualiza una categoría existente
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategory(int id, Category category)
+        public async Task<IActionResult> PutCategory(int id, CategoryCreateDto categoryDto)
         {
-            if (id != category.Id)
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
             {
-                return BadRequest("El ID de la URL no coincide con el ID de la categoría enviada.");
+                return NotFound();
             }
 
-            _context.Entry(category).State = EntityState.Modified;
+            category.Name = categoryDto.Name;
+            category.Description = categoryDto.Description;
+            category.IsActive = categoryDto.IsActive;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
-            return NoContent(); // Retorna 204 No Content (Actualizado con éxito)
+            return NoContent();
         }
 
         // DELETE: api/categories/5
-        // Elimina una categoría físicamente de la base de datos
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
@@ -95,13 +116,7 @@ namespace CompraCerca.API.Controllers
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Retorna 204 No Content (Eliminado con éxito)
-        }
-
-        // Método auxiliar para verificar si una categoría existe por ID
-        private bool CategoryExists(int id)
-        {
-            return _context.Categories.Any(e => e.Id == id);
+            return NoContent();
         }
     }
 }
