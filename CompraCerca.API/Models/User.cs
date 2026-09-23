@@ -1,4 +1,4 @@
-﻿namespace CompraCerca.API.Models;
+﻿using CompraCerca.API.Models;
 
 public class User
 {
@@ -15,6 +15,8 @@ public class User
     public string City { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+
+    public string Role { get; set; } = "User";
 
     public ICollection<Product> Products { get; set; } = new List<Product>();
 }
