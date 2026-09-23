@@ -5,13 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompraCerca.API.Controllers
 {
-    [Route("api/[controller]")] // La ruta base será: api/categories
-    [ApiController]            // Habilita comportamientos automáticos de Web API (validación de modelos, etc.)
+    [Route("api/[controller]")]
+    [ApiController]
     public class CategoriesController : ControllerBase
     {
         private readonly CompraCercaDbContext _context;
 
-        // Inyección de dependencias: Le pedimos al framework que nos entregue la instancia de la base de datos
         public CategoriesController(CompraCercaDbContext context)
         {
             _context = context;
@@ -34,10 +33,10 @@ namespace CompraCerca.API.Controllers
 
             if (category == null)
             {
-                return NotFound(); // Retorna 404 Not Found
+                return NotFound();
             }
 
-            return category; // Retorna 200 OK con la categoría
+            return category;
         }
 
         // POST: api/categories
@@ -48,8 +47,61 @@ namespace CompraCerca.API.Controllers
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            // Retorna un código 201 Created y la url donde se puede consultar el recurso creado
             return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+        }
+
+        // PUT: api/categories/5
+        // Actualiza una categoría existente
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCategory(int id, Category category)
+        {
+            if (id != category.Id)
+            {
+                return BadRequest("El ID de la URL no coincide con el ID de la categoría enviada.");
+            }
+
+            _context.Entry(category).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CategoryExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent(); // Retorna 204 No Content (Actualizado con éxito)
+        }
+
+        // DELETE: api/categories/5
+        // Elimina una categoría físicamente de la base de datos
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // Retorna 204 No Content (Eliminado con éxito)
+        }
+
+        // Método auxiliar para verificar si una categoría existe por ID
+        private bool CategoryExists(int id)
+        {
+            return _context.Categories.Any(e => e.Id == id);
         }
     }
 }
