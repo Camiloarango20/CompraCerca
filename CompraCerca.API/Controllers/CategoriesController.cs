@@ -1,8 +1,6 @@
-﻿using CompraCerca.API.Data;
-using CompraCerca.API.DTOs;
-using CompraCerca.API.Models;
+﻿using CompraCerca.API.DTOs;
+using CompraCerca.API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CompraCerca.API.Controllers
 {
@@ -10,28 +8,18 @@ namespace CompraCerca.API.Controllers
     [ApiController]
     public class CategoriesController : ControllerBase
     {
-        private readonly CompraCercaDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoriesController(CompraCercaDbContext context)
+        public CategoriesController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
         // GET: api/categories
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryResponseDto>>> GetCategories()
         {
-            // Mapeamos la lista de entidades a una lista de DTOs de respuesta
-            var categories = await _context.Categories
-                .Select(c => new CategoryResponseDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    IsActive = c.IsActive
-                })
-                .ToListAsync();
-
+            var categories = await _categoryService.GetAllCategoriesAsync();
             return Ok(categories);
         }
 
@@ -39,66 +27,32 @@ namespace CompraCerca.API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryResponseDto>> GetCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-
+            var category = await _categoryService.GetCategoryByIdAsync(id);
             if (category == null)
             {
                 return NotFound();
             }
 
-            var categoryDto = new CategoryResponseDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                IsActive = category.IsActive
-            };
-
-            return Ok(categoryDto);
+            return Ok(category);
         }
 
         // POST: api/categories
         [HttpPost]
         public async Task<ActionResult<CategoryResponseDto>> PostCategory(CategoryCreateDto categoryDto)
         {
-            // Mapeamos del DTO de entrada a la entidad de Base de Datos
-            var category = new Category
-            {
-                Name = categoryDto.Name,
-                Description = categoryDto.Description,
-                IsActive = categoryDto.IsActive
-            };
-
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-
-            // Mapeamos la entidad guardada a un DTO de respuesta
-            var responseDto = new CategoryResponseDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                IsActive = category.IsActive
-            };
-
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, responseDto);
+            var createdCategory = await _categoryService.CreateCategoryAsync(categoryDto);
+            return CreatedAtAction(nameof(GetCategory), new { id = createdCategory.Id }, createdCategory);
         }
 
         // PUT: api/categories/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(int id, CategoryCreateDto categoryDto)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
+            var updated = await _categoryService.UpdateCategoryAsync(id, categoryDto);
+            if (!updated)
             {
                 return NotFound();
             }
-
-            category.Name = categoryDto.Name;
-            category.Description = categoryDto.Description;
-            category.IsActive = categoryDto.IsActive;
-
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -107,14 +61,11 @@ namespace CompraCerca.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
+            var deleted = await _categoryService.DeleteCategoryAsync(id);
+            if (!deleted)
             {
                 return NotFound();
             }
-
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }

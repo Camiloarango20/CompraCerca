@@ -1,11 +1,27 @@
-using System.Text;
 using CompraCerca.API.Data;
+using CompraCerca.API.Interfaces;
+using CompraCerca.API.Repositories;
+using CompraCerca.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+// Registro de Repositorios y Servicios (Inyección de Dependencias)
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 // 1. Cadena de conexión a SQL Server LocalDB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

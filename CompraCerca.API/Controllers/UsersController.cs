@@ -1,8 +1,6 @@
-﻿using CompraCerca.API.Data;
-using CompraCerca.API.DTOs;
-using CompraCerca.API.Models;
+﻿using CompraCerca.API.DTOs;
+using CompraCerca.API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CompraCerca.API.Controllers
 {
@@ -10,99 +8,41 @@ namespace CompraCerca.API.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly CompraCercaDbContext _context;
+        private readonly IUserService _userService;
 
-        public UsersController(CompraCercaDbContext context)
+        public UsersController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
         {
-            var users = await _context.Users
-                .Select(u => new UserResponseDto
-                {
-                    Id = u.Id,
-                    FirstName = u.FirstName,
-                    LastName = u.LastName,
-                    Email = u.Email,
-                    City = u.City,
-                    IsActive = u.IsActive
-                })
-                .ToListAsync();
-
+            var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<UserResponseDto>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null) return NotFound();
 
-            var userDto = new UserResponseDto
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                City = user.City,
-                IsActive = user.IsActive
-            };
-
-            return Ok(userDto);
+            return Ok(user);
         }
 
         [HttpPost]
         public async Task<ActionResult<UserResponseDto>> PostUser(UserCreateDto userDto)
         {
-            var user = new User
-            {
-                FirstName = userDto.FirstName,
-                LastName = userDto.LastName,
-                Email = userDto.Email,
-                PasswordHash = userDto.Password, // Nota: Se implementará hashing en fases posteriores
-                City = userDto.City,
-                IsActive = userDto.IsActive
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            var responseDto = new UserResponseDto
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                City = user.City,
-                IsActive = user.IsActive
-            };
-
-            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, responseDto);
+            var createdUser = await _userService.CreateUserAsync(userDto);
+            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, createdUser);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, UserCreateDto userDto)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            user.FirstName = userDto.FirstName;
-            user.LastName = userDto.LastName;
-            user.Email = userDto.Email;
-            user.PasswordHash = userDto.Password;
-            user.City = userDto.City;
-            user.IsActive = userDto.IsActive;
-
-            await _context.SaveChangesAsync();
+            var updated = await _userService.UpdateUserAsync(id, userDto);
+            if (!updated) return NotFound();
 
             return NoContent();
         }
@@ -110,14 +50,8 @@ namespace CompraCerca.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            var deleted = await _userService.DeleteUserAsync(id);
+            if (!deleted) return NotFound();
 
             return NoContent();
         }
