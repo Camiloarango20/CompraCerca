@@ -1,4 +1,5 @@
 ﻿using CompraCerca.API.Data;
+using CompraCerca.API.DTOs;
 using CompraCerca.API.Interfaces;
 using CompraCerca.API.Models;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,49 @@ namespace CompraCerca.API.Repositories
         {
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<(List<Product> Items, int TotalCount)> GetPagedAsync(ProductFilterDto filter)
+        {
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.User)
+                .AsQueryable();
+
+            // 1. Aplicar filtros dinámicos si se especifican
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                string search = filter.Search.Trim().ToLower();
+                query = query.Where(p => p.Title.ToLower().Contains(search) ||
+                                         p.Description.ToLower().Contains(search));
+            }
+
+            if (filter.CategoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
+            }
+
+            if (filter.MinPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= filter.MinPrice.Value);
+            }
+
+            if (filter.MaxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= filter.MaxPrice.Value);
+            }
+
+            // 2. Contar el total de registros que coinciden con los filtros
+            int totalCount = await query.CountAsync();
+
+            // 3. Aplicar paginación (Skip y Take)
+            var items = await query
+                .OrderByDescending(p => p.Id) // Se ordena por Id en lugar de CreatedAt
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }

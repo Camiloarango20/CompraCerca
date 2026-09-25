@@ -1,4 +1,5 @@
-﻿using CompraCerca.API.Models;
+﻿using CompraCerca.API.DTOs;
+using CompraCerca.API.Models;
 
 namespace CompraCerca.API.Interfaces
 {
@@ -9,5 +10,7 @@ namespace CompraCerca.API.Interfaces
         Task<Product> CreateAsync(Product product);
         Task UpdateAsync(Product product);
         Task DeleteAsync(Product product);
+
     }
+
 }

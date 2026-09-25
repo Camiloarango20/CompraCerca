@@ -1,5 +1,6 @@
 ﻿using CompraCerca.API.DTOs;
 using CompraCerca.API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompraCerca.API.Controllers
@@ -57,11 +58,11 @@ namespace CompraCerca.API.Controllers
             return NoContent();
         }
 
-        // DELETE: api/categories/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _categoryService.DeleteCategoryAsync(id);
+            bool deleted = await _categoryService.DeleteCategoryAsync(id);
             if (!deleted)
             {
                 return NotFound();

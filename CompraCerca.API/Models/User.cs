@@ -19,4 +19,7 @@ public class User
     public string Role { get; set; } = "User";
 
     public ICollection<Product> Products { get; set; } = new List<Product>();
+
+
+
 }

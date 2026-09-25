@@ -36,7 +36,9 @@ namespace CompraCerca.API.Services
                 Email = userDto.Email,
                 PasswordHash = passwordHash,
                 City = userDto.City,
-                IsActive = userDto.IsActive
+                IsActive = userDto.IsActive,
+                // Si no se especifica rol en el DTO, asigna "User" por defecto
+                Role = string.IsNullOrWhiteSpace(userDto.Role) ? "User" : userDto.Role
             };
 
             var createdUser = await _userRepository.CreateAsync(user);
@@ -46,7 +48,8 @@ namespace CompraCerca.API.Services
             {
                 Token = token,
                 Email = createdUser.Email,
-                UserName = $"{createdUser.FirstName} {createdUser.LastName}"
+                UserName = $"{createdUser.FirstName} {createdUser.LastName}",
+                Role = createdUser.Role
             };
 
             return (response, null);
@@ -72,7 +75,8 @@ namespace CompraCerca.API.Services
             {
                 Token = token,
                 Email = user.Email,
-                UserName = $"{user.FirstName} {user.LastName}"
+                UserName = $"{user.FirstName} {user.LastName}",
+                Role = user.Role
             };
 
             return (response, null);
@@ -88,6 +92,8 @@ namespace CompraCerca.API.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("name", $"{user.FirstName} {user.LastName}"),
+                // CLAIM ESENCIAL PARA EL CONTROL DE ROLES EN ASP.NET CORE:
+                new Claim(ClaimTypes.Role, user.Role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
