@@ -1,4 +1,3 @@
-using System.Text;
 using CompraCerca.API.Data;
 using CompraCerca.API.Interfaces;
 using CompraCerca.API.Middlewares;
@@ -8,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +70,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 // =====================================================
+// 6. SWAGGER + JWT BEARER (CONFIGURACIÓN ESTÁNDAR)
+// =====================================================
 // 6. SWAGGER + JWT BEARER
 // =====================================================
 builder.Services.AddSwaggerGen(options =>
@@ -97,9 +99,7 @@ builder.Services.AddSwaggerGen(options =>
             new List<string>()
         }
     });
-});
-
-// =====================================================
+});// =====================================================
 // 7. CONSTRUIR APLICACIÓN
 // =====================================================
 var app = builder.Build();
