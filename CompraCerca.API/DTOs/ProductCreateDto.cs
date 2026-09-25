@@ -17,9 +17,6 @@ namespace CompraCerca.API.DTOs
         [Range(1, int.MaxValue, ErrorMessage = "Debe indicar un ID de categoría válido.")]
         public int CategoryId { get; set; }
 
-        [Range(1, int.MaxValue, ErrorMessage = "Debe indicar un ID de usuario válido.")]
-        public int UserId { get; set; }
-
         [Required(ErrorMessage = "La ciudad es obligatoria.")]
         public string City { get; set; } = string.Empty;
 

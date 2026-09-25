@@ -11,24 +11,39 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cadena de conexión a SQL Server LocalDB
+// =====================================================
+// 1. CADENA DE CONEXIÓN A SQL SERVER LOCALDB
+// =====================================================
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 if (string.IsNullOrEmpty(connectionString))
 {
-    throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no fue encontrada.");
+    throw new InvalidOperationException(
+        "La cadena de conexión 'DefaultConnection' no fue encontrada.");
 }
 
 builder.Services.AddDbContext<CompraCercaDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 2. Configuración de Autenticación con Token JWT
+
+// =====================================================
+// 2. CONFIGURACIÓN DE AUTENTICACIÓN JWT
+// =====================================================
+
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+
+var key = Encoding.UTF8.GetBytes(
+    jwtSettings["Key"]!
+);
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme =
+        JwtBearerDefaults.AuthenticationScheme;
+
+    options.DefaultChallengeScheme =
+        JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
@@ -38,26 +53,51 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
+
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+
+        IssuerSigningKey =
+            new SymmetricSecurityKey(key)
     };
 });
 
-// 3. Registro de Repositorios y Servicios (Inyección de Dependencias)
+
+// =====================================================
+// 3. REPOSITORIOS
+// =====================================================
+
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+
+// =====================================================
+// 4. SERVICIOS
+// =====================================================
+
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddScoped<IProductService, ProductService>();
 
+
+// =====================================================
+// 5. CONTROLADORES
+// =====================================================
+
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
 
-// 4. Configuración de Swagger compatible con .NET moderno y JWT Bearer
+
+// =====================================================
+// 6. SWAGGER + JWT BEARER
+// =====================================================
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -66,45 +106,91 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 
-    // Definición del esquema Bearer
+    // -------------------------------------------------
+    // DEFINICIÓN DEL ESQUEMA JWT
+    // -------------------------------------------------
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Description = "Ingresa únicamente el Token JWT obtenido en el Login.",
+        Description = "Ingresa el token JWT obtenido en el Login.",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
 
-    // Sobrecarga con expresión lambda
-    options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
-    {
+    // -------------------------------------------------
+    // REQUERIMIENTO DE SEGURIDAD
+    // -------------------------------------------------
+
+    options.AddSecurityRequirement(document =>
+        new OpenApiSecurityRequirement
         {
-            new OpenApiSecuritySchemeReference("Bearer"),
-            new List<string>()
-        }
-    });
+            {
+                new OpenApiSecuritySchemeReference("Bearer"),
+                new List<string>()
+            }
+        });
 });
+
+
+// =====================================================
+// 7. CONSTRUIR APLICACIÓN
+// =====================================================
 
 var app = builder.Build();
 
-// 5. REGISTRO DEL MIDDLEWARE GLOBAL DE EXCEPCIONES (Siempre al inicio del pipeline)
+
+// =====================================================
+// 8. MIDDLEWARE GLOBAL DE EXCEPCIONES
+// =====================================================
+
 app.UseMiddleware<ExceptionMiddleware>();
 
-// Configuración del pipeline HTTP
+
+// =====================================================
+// 9. SWAGGER
+// =====================================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+
     app.UseSwaggerUI();
 }
 
+
+// =====================================================
+// 10. HTTPS
+// =====================================================
+
 app.UseHttpsRedirection();
 
-// IMPORTANTE: UseAuthentication SIEMPRE debe ir antes de UseAuthorization
+
+// =====================================================
+// 11. AUTENTICACIÓN
+// =====================================================
+
 app.UseAuthentication();
+
+
+// =====================================================
+// 12. AUTORIZACIÓN
+// =====================================================
+
 app.UseAuthorization();
 
+
+// =====================================================
+// 13. CONTROLADORES
+// =====================================================
+
 app.MapControllers();
+
+
+// =====================================================
+// 14. EJECUTAR
+// =====================================================
 
 app.Run();
