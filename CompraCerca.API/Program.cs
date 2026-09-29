@@ -49,14 +49,14 @@ builder.Services.AddAuthentication(options =>
 });
 
 // =====================================================
-// 3. REPOSITORIOS (INYECCIÓN DE DEPENDENCIAS)
+// 3. REPOSITORIOS
 // =====================================================
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // =====================================================
-// 4. SERVICIOS (INYECCIÓN DE DEPENDENCIAS)
+// 4. SERVICIOS
 // =====================================================
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -70,8 +70,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 // =====================================================
-// 6. SWAGGER + JWT BEARER (CONFIGURACIÓN ESTÁNDAR)
-// =====================================================
 // 6. SWAGGER + JWT BEARER
 // =====================================================
 builder.Services.AddSwaggerGen(options =>
@@ -84,22 +82,20 @@ builder.Services.AddSwaggerGen(options =>
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        Description = "Ingresa únicamente el Token JWT obtenido en el Login.",
-        In = ParameterLocation.Header,
+        Description = "Pega solo el token JWT del login.",
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
 
-    options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
+    // CLAVE: pasar "document" a la referencia para que se resuelva contra "Bearer"
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecuritySchemeReference("Bearer"),
-            new List<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
     });
-});// =====================================================
+});
+
+// =====================================================
 // 7. CONSTRUIR APLICACIÓN
 // =====================================================
 var app = builder.Build();
@@ -121,13 +117,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // =====================================================
-// 10. SEGURIDAD (AUTHENTICATION ANTES DE AUTHORIZATION)
+// 10. SEGURIDAD
 // =====================================================
 app.UseAuthentication();
 app.UseAuthorization();
 
 // =====================================================
-// 11. MAPEO DE RUTAS Y EJECUCIÓN
+// 11. RUTAS Y EJECUCIÓN
 // =====================================================
 app.MapControllers();
 

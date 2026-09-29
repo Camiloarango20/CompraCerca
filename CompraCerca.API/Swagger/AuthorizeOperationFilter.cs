@@ -10,26 +10,26 @@ namespace CompraCerca.API.Swagger
             OpenApiOperation operation,
             OperationFilterContext context)
         {
-            var hasAuthorize =
-                context.ApiDescription.ActionDescriptor.EndpointMetadata
-                    .OfType<AuthorizeAttribute>()
-                    .Any();
+            // Busca AuthorizeAttribute en el ActionContext de ASP.NET Core
+            var metadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
 
-            if (!hasAuthorize)
+            var hasAuthorize = metadata.OfType<AuthorizeAttribute>().Any();
+            var hasAllowAnonymous = metadata.OfType<AllowAnonymousAttribute>().Any();
+
+            if (!hasAuthorize || hasAllowAnonymous)
             {
                 return;
             }
 
-            operation.Security =
-            [
-                new OpenApiSecurityRequirement
+            operation.Security ??= new List<OpenApiSecurityRequirement>();
+
+            operation.Security.Add(new OpenApiSecurityRequirement
+            {
                 {
-                    {
-                        new OpenApiSecuritySchemeReference("Bearer"),
-                        []
-                    }
+                    new OpenApiSecuritySchemeReference("Bearer"),
+                    new List<string>()
                 }
-            ];
+            });
         }
     }
 }
