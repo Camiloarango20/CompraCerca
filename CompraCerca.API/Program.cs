@@ -24,6 +24,24 @@ builder.Services.AddDbContext<CompraCercaDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // =====================================================
+// 1.1 CONFIGURACIÓN DE CORS (Agregado para Vercel)
+// =====================================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVercelFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "https://compracerca-web.vercel.app", // Tu frontend en Vercel
+                "http://localhost:5173",              // Para pruebas locales en Vite
+                "http://localhost:3000"
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// =====================================================
 // 2. CONFIGURACIÓN DE AUTENTICACIÓN JWT
 // =====================================================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -88,7 +106,6 @@ builder.Services.AddSwaggerGen(options =>
         BearerFormat = "JWT"
     });
 
-    // CLAVE: pasar "document" a la referencia para que se resuelva contra "Bearer"
     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
         [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
@@ -117,8 +134,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // =====================================================
-// 10. SEGURIDAD
+// 10. SEGURIDAD & CORS
 // =====================================================
+// IMPORTANTE: UseCors debe ir ANTES de UseAuthentication y UseAuthorization
+app.UseCors("AllowVercelFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
