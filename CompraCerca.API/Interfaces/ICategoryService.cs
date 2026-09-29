@@ -6,8 +6,8 @@ namespace CompraCerca.API.Interfaces
     {
         Task<IEnumerable<CategoryResponseDto>> GetAllCategoriesAsync();
         Task<CategoryResponseDto?> GetCategoryByIdAsync(int id);
-        Task<CategoryResponseDto> CreateCategoryAsync(CategoryCreateDto dto);
-        Task<bool> UpdateCategoryAsync(int id, CategoryCreateDto dto);
+        Task<(CategoryResponseDto? Category, string? ErrorMessage)> CreateCategoryAsync(CategoryCreateDto dto);
+        Task<(bool Success, string? ErrorMessage)> UpdateCategoryAsync(int id, CategoryCreateDto dto);
         Task<bool> DeleteCategoryAsync(int id);
     }
 }

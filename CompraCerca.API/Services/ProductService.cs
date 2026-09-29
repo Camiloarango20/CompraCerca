@@ -29,6 +29,24 @@ namespace CompraCerca.API.Services
                 .Select(MapToResponseDto);
         }
 
+        public async Task<PagedResultDto<ProductResponseDto>> GetPagedProductsAsync(ProductFilterDto filter)
+        {
+            var (items, totalCount) = await _productRepository.GetPagedAsync(filter);
+
+            var mappedItems = items
+                .Where(p => p.IsActive)
+                .Select(MapToResponseDto)
+                .ToList();
+
+            return new PagedResultDto<ProductResponseDto>
+            {
+                Items = mappedItems,
+                TotalCount = totalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize
+            };
+        }
+
         public async Task<ProductResponseDto?> GetProductByIdAsync(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
@@ -75,10 +93,7 @@ namespace CompraCerca.API.Services
                 Description = productDto.Description,
                 Price = productDto.Price,
                 CategoryId = productDto.CategoryId,
-
-                // El dueño sale del JWT
                 UserId = userId,
-
                 City = productDto.City,
                 IsActive = productDto.IsActive
             };

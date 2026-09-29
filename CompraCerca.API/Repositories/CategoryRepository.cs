@@ -47,5 +47,14 @@ namespace CompraCerca.API.Repositories
         {
             return await _context.Categories.AnyAsync(c => c.Id == id);
         }
+
+        public async Task<bool> ExistsByNameAsync(string name)
+        {
+            string normalizedName = name.Trim().ToLower();
+            return await _context.Categories
+                .AnyAsync(c => c.Name.ToLower() == normalizedName);
+        }
     }
+
+
 }

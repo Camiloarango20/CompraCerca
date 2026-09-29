@@ -37,7 +37,6 @@ namespace CompraCerca.API.Services
                 PasswordHash = passwordHash,
                 City = userDto.City,
                 IsActive = userDto.IsActive,
-                // Si no se especifica rol en el DTO, asigna "User" por defecto
                 Role = string.IsNullOrWhiteSpace(userDto.Role) ? "User" : userDto.Role
             };
 
@@ -69,6 +68,11 @@ namespace CompraCerca.API.Services
                 return (null, "Credenciales inválidas.");
             }
 
+            if (!user.IsActive)
+            {
+                return (null, "El usuario está inactivo.");
+            }
+
             string token = GenerateJwtToken(user);
 
             var response = new AuthResponseDto
@@ -91,8 +95,8 @@ namespace CompraCerca.API.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("name", $"{user.FirstName} {user.LastName}"),
-                // CLAIM ESENCIAL PARA EL CONTROL DE ROLES EN ASP.NET CORE:
+                new Claim("firstName", user.FirstName),
+                new Claim("lastName", user.LastName),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };

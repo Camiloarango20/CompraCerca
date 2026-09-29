@@ -1,11 +1,13 @@
 ﻿using CompraCerca.API.DTOs;
 using CompraCerca.API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompraCerca.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")] // Solo administradores pueden gestionar la lista de usuarios
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -15,6 +17,7 @@ namespace CompraCerca.API.Controllers
             _userService = userService;
         }
 
+        // GET: api/users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
         {
@@ -22,6 +25,7 @@ namespace CompraCerca.API.Controllers
             return Ok(users);
         }
 
+        // GET: api/users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserResponseDto>> GetUser(int id)
         {
@@ -31,15 +35,9 @@ namespace CompraCerca.API.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<UserResponseDto>> PostUser(UserCreateDto userDto)
-        {
-            var createdUser = await _userService.CreateUserAsync(userDto);
-            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, createdUser);
-        }
-
+        // PUT: api/users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, UserCreateDto userDto)
+        public async Task<IActionResult> PutUser(int id, UserUpdateDto userDto)
         {
             var updated = await _userService.UpdateUserAsync(id, userDto);
             if (!updated) return NotFound();
@@ -47,6 +45,7 @@ namespace CompraCerca.API.Controllers
             return NoContent();
         }
 
+        // DELETE: api/users/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

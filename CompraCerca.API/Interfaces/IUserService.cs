@@ -6,8 +6,7 @@ namespace CompraCerca.API.Interfaces
     {
         Task<IEnumerable<UserResponseDto>> GetAllUsersAsync();
         Task<UserResponseDto?> GetUserByIdAsync(int id);
-        Task<UserResponseDto> CreateUserAsync(UserCreateDto userDto);
-        Task<bool> UpdateUserAsync(int id, UserCreateDto userDto);
+        Task<bool> UpdateUserAsync(int id, UserUpdateDto userDto);
         Task<bool> DeleteUserAsync(int id);
     }
 }

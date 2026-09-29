@@ -39,37 +39,58 @@ namespace CompraCerca.API.Services
             };
         }
 
-        public async Task<CategoryResponseDto> CreateCategoryAsync(CategoryCreateDto categoryDto)
+        public async Task<(CategoryResponseDto? Category, string? ErrorMessage)> CreateCategoryAsync(CategoryCreateDto categoryDto)
         {
+            bool exists = await _categoryRepository.ExistsByNameAsync(categoryDto.Name);
+            if (exists)
+            {
+                return (null, $"Ya existe una categoría con el nombre '{categoryDto.Name}'.");
+            }
+
             var category = new Category
             {
-                Name = categoryDto.Name,
+                Name = categoryDto.Name.Trim(),
                 Description = categoryDto.Description,
                 IsActive = categoryDto.IsActive
             };
 
             var createdCategory = await _categoryRepository.CreateAsync(category);
 
-            return new CategoryResponseDto
+            var response = new CategoryResponseDto
             {
                 Id = createdCategory.Id,
                 Name = createdCategory.Name,
                 Description = createdCategory.Description,
                 IsActive = createdCategory.IsActive
             };
+
+            return (response, null);
         }
 
-        public async Task<bool> UpdateCategoryAsync(int id, CategoryCreateDto categoryDto)
+        public async Task<(bool Success, string? ErrorMessage)> UpdateCategoryAsync(int id, CategoryCreateDto categoryDto)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null) return false;
+            if (category == null)
+            {
+                return (false, "La categoría especificada no existe.");
+            }
 
-            category.Name = categoryDto.Name;
+            // Si se cambia el nombre, verificar que no colisione con otra categoría existente
+            if (!category.Name.Equals(categoryDto.Name.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                bool exists = await _categoryRepository.ExistsByNameAsync(categoryDto.Name);
+                if (exists)
+                {
+                    return (false, $"Ya existe otra categoría con el nombre '{categoryDto.Name}'.");
+                }
+            }
+
+            category.Name = categoryDto.Name.Trim();
             category.Description = categoryDto.Description;
             category.IsActive = categoryDto.IsActive;
 
             await _categoryRepository.UpdateAsync(category);
-            return true;
+            return (true, null);
         }
 
         public async Task<bool> DeleteCategoryAsync(int id)

@@ -11,6 +11,7 @@ namespace CompraCerca.API.Interfaces
         Task UpdateAsync(Product product);
         Task DeleteAsync(Product product);
 
+        // Método de paginación y filtrado
+        Task<(List<Product> Items, int TotalCount)> GetPagedAsync(ProductFilterDto filter);
     }
-
 }

@@ -6,6 +6,9 @@ namespace CompraCerca.API.Interfaces
     {
         Task<IEnumerable<ProductResponseDto>> GetAllProductsAsync();
 
+        // Método agregado para Paginación y Filtros
+        Task<PagedResultDto<ProductResponseDto>> GetPagedProductsAsync(ProductFilterDto filter);
+
         Task<ProductResponseDto?> GetProductByIdAsync(int id);
 
         Task<(ProductResponseDto? Product, string? ErrorMessage)>

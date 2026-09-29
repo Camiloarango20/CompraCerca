@@ -1,6 +1,5 @@
 ﻿using CompraCerca.API.DTOs;
 using CompraCerca.API.Interfaces;
-using CompraCerca.API.Models;
 
 namespace CompraCerca.API.Services
 {
@@ -23,7 +22,8 @@ namespace CompraCerca.API.Services
                 LastName = u.LastName,
                 Email = u.Email,
                 City = u.City,
-                IsActive = u.IsActive
+                IsActive = u.IsActive,
+                Role = u.Role
             });
         }
 
@@ -39,49 +39,21 @@ namespace CompraCerca.API.Services
                 LastName = user.LastName,
                 Email = user.Email,
                 City = user.City,
-                IsActive = user.IsActive
+                IsActive = user.IsActive,
+                Role = user.Role
             };
         }
 
-        public async Task<UserResponseDto> CreateUserAsync(UserCreateDto userDto)
-        {
-            // Aplicamos hash con BCrypt
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
-
-            var user = new User
-            {
-                FirstName = userDto.FirstName,
-                LastName = userDto.LastName,
-                Email = userDto.Email,
-                PasswordHash = passwordHash,
-                City = userDto.City,
-                IsActive = userDto.IsActive
-            };
-
-            var createdUser = await _userRepository.CreateAsync(user);
-
-            return new UserResponseDto
-            {
-                Id = createdUser.Id,
-                FirstName = createdUser.FirstName,
-                LastName = createdUser.LastName,
-                Email = createdUser.Email,
-                City = createdUser.City,
-                IsActive = createdUser.IsActive
-            };
-        }
-
-        public async Task<bool> UpdateUserAsync(int id, UserCreateDto userDto)
+        public async Task<bool> UpdateUserAsync(int id, UserUpdateDto userDto)
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null) return false;
 
             user.FirstName = userDto.FirstName;
             user.LastName = userDto.LastName;
-            user.Email = userDto.Email;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
             user.City = userDto.City;
             user.IsActive = userDto.IsActive;
+            user.Role = userDto.Role;
 
             await _userRepository.UpdateAsync(user);
             return true;
