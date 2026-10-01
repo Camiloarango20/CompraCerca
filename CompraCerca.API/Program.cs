@@ -125,11 +125,8 @@ app.UseMiddleware<ExceptionMiddleware>();
 // =====================================================
 // 9. PIPELINE Y SWAGGER
 // =====================================================
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
