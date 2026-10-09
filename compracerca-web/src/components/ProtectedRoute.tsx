@@ -15,8 +15,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) 
     }>
         Cargando...
     </div>
-    );
-  }
+        );
+    }
 
 if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

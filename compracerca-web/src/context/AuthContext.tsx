@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { authService } from '../services/authService';
 import { LoginRequest, RegisterRequest, UserTokenPayload } from '../interfaces/auth';
@@ -20,20 +20,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Función auxiliar para extraer datos del token en localStorage
 const getUserFromStoredToken = (): { user: User | null; token: string | null } => {
     const storedToken = localStorage.getItem('token');
     if (!storedToken) return { user: null, token: null };
 
     try {
         const decoded = jwtDecode<UserTokenPayload>(storedToken);
+
         if (decoded.exp * 1000 < Date.now()) {
             localStorage.removeItem('token');
             return { user: null, token: null };
         }
-        const roleClaim = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-            || decoded.role
-            || 'User';
+
+        const roleClaim =
+            decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+            decoded.role ||
+            'User';
 
         return {
             token: storedToken,
@@ -46,9 +48,18 @@ const getUserFromStoredToken = (): { user: User | null; token: string | null } =
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    // Inicialización perezosa (evalúa localStorage una sola vez al cargar)
-    const [authState, setAuthState] = useState(() => getUserFromStoredToken());
-    const [loading] = useState<boolean>(false);
+    const [authState, setAuthState] = useState<{ user: User | null; token: string | null }>({
+        user: null,
+        token: null,
+    });
+
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        const stored = getUserFromStoredToken();
+        setAuthState(stored);
+        setLoading(false);
+    }, []);
 
     const logout = () => {
         localStorage.removeItem('token');
@@ -57,11 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleAuthResponse = (authToken: string) => {
         localStorage.setItem('token', authToken);
+
         try {
             const decoded = jwtDecode<UserTokenPayload>(authToken);
-            const roleClaim = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-                || decoded.role
-                || 'User';
+
+            const roleClaim =
+                decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+                decoded.role ||
+                'User';
 
             setAuthState({
                 token: authToken,
@@ -73,18 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const login = async (credentials: LoginRequest) => {
+        setLoading(true);
         const response = await authService.login(credentials);
         handleAuthResponse(response.token);
+        setLoading(false);
     };
 
     const register = async (data: RegisterRequest) => {
+        setLoading(true);
         const response = await authService.register(data);
         handleAuthResponse(response.token);
+        setLoading(false);
     };
 
     return (
         <AuthContext.Provider
-      value= {{
+            value= {{
         user: authState.user,
             token: authState.token,
                 isAuthenticated: !!authState.user,
@@ -92,12 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     register,
                     logout,
                     loading,
-      }
+            }
 }
-    >
+        >
 { children }
     </AuthContext.Provider>
-  );
+    );
 }
 
 export const useAuth = () => {

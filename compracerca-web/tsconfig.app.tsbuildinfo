@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/axiosclient.ts","./src/components/protectedroute.tsx","./src/context/authcontext.tsx","./src/interfaces/auth.ts","./src/interfaces/product.ts","./src/pages/loginpage.tsx","./src/services/authservice.ts"],"version":"6.0.3"}

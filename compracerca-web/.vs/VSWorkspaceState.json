@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\public",
+    "\\src",
+    "\\src\\api",
+    "\\src\\assets",
+    "\\src\\components",
+    "\\src\\context",
+    "\\src\\interfaces",
+    "\\src\\pages",
+    "\\src\\services"
+  ],
+  "SelectedNode": "\\src\\components\\ProtectedRoute.tsx",
+  "PreviewInSolutionExplorer": false
+}
