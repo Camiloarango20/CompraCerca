@@ -29,16 +29,18 @@ namespace CompraCerca.API.Services
 
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
 
+
             var user = new User
             {
-                FirstName = userDto.FirstName,
-                LastName = userDto.LastName,
-                Email = userDto.Email,
+                FirstName = userDto.FirstName.Trim(),
+                LastName = userDto.LastName.Trim(),
+                Email = userDto.Email.Trim().ToLowerInvariant(),
                 PasswordHash = passwordHash,
-                City = userDto.City,
-                IsActive = userDto.IsActive,
-                Role = string.IsNullOrWhiteSpace(userDto.Role) ? "User" : userDto.Role
+                City = userDto.City.Trim(),
+                IsActive = true,
+                Role = "User"
             };
+
 
             var createdUser = await _userRepository.CreateAsync(user);
             string token = GenerateJwtToken(createdUser);
