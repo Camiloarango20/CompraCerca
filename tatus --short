@@ -1,0 +1,72 @@
+[1mdiff --git a/CompraCerca.API/DTOs/UserCreateDto.cs b/CompraCerca.API/DTOs/UserCreateDto.cs[m
+[1mindex 8e84a4d..a11c504 100644[m
+[1m--- a/CompraCerca.API/DTOs/UserCreateDto.cs[m
+[1m+++ b/CompraCerca.API/DTOs/UserCreateDto.cs[m
+[36m@@ -1,17 +1,30 @@[m
+[31m-﻿using System.ComponentModel.DataAnnotations;[m
+[32m+[m[32m﻿[m
+[32m+[m[32musing System.ComponentModel.DataAnnotations;[m
+ [m
+ namespace CompraCerca.API.DTOs[m
+ {[m
+     public class UserCreateDto[m
+     {[m
+[32m+[m[32m        [Required(ErrorMessage = "El nombre es obligatorio.")][m
+[32m+[m[32m        [StringLength(100, MinimumLength = 2)][m
+         public string FirstName { get; set; } = string.Empty;[m
+[32m+[m
+[32m+[m[32m        [Required(ErrorMessage = "El apellido es obligatorio.")][m
+[32m+[m[32m        [StringLength(100, MinimumLength = 2)][m
+         public string LastName { get; set; } = string.Empty;[m
+[32m+[m
+[32m+[m[32m        [Required(ErrorMessage = "El correo electrónico es obligatorio.")][m
+[32m+[m[32m        [EmailAddress(ErrorMessage = "El correo electrónico no es válido.")][m
+[32m+[m[32m        [StringLength(254)][m
+         public string Email { get; set; } = string.Empty;[m
+[31m-        public string Password { get; set; } = string.Empty;[m
+[31m-        public string City { get; set; } = string.Empty;[m
+[31m-        public string Role { get; set; } = "User";[m
+[31m-        public bool IsActive { get; set; } = true;[m
+ [m
+[32m+[m[32m        [Required(ErrorMessage = "La contraseña es obligatoria.")][m
+[32m+[m[32m        [MinLength(12, ErrorMessage = "La contraseña debe tener al menos 12 caracteres.")][m
+[32m+[m[32m        [StringLength(72, ErrorMessage = "La contraseña no puede superar 72 caracteres.")][m
+[32m+[m[32m        public string Password { get; set; } = string.Empty;[m
+ [m
+[32m+[m[32m        [Required(ErrorMessage = "La ciudad es obligatoria.")][m
+[32m+[m[32m        [StringLength(100)][m
+[32m+[m[32m        public string City { get; set; } = string.Empty;[m
+     }[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[1mdiff --git a/CompraCerca.API/Services/AuthService.cs b/CompraCerca.API/Services/AuthService.cs[m
+[1mindex dcf73f8..b77bf3c 100644[m
+[1m--- a/CompraCerca.API/Services/AuthService.cs[m
+[1m+++ b/CompraCerca.API/Services/AuthService.cs[m
+[36m@@ -29,17 +29,19 @@[m [mnamespace CompraCerca.API.Services[m
+ [m
+             string passwordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);[m
+ [m
+[32m+[m
+             var user = new User[m
+             {[m
+[31m-                FirstName = userDto.FirstName,[m
+[31m-                LastName = userDto.LastName,[m
+[31m-                Email = userDto.Email,[m
+[32m+[m[32m                FirstName = userDto.FirstName.Trim(),[m
+[32m+[m[32m                LastName = userDto.LastName.Trim(),[m
+[32m+[m[32m                Email = userDto.Email.Trim().ToLowerInvariant(),[m
+                 PasswordHash = passwordHash,[m
+[31m-                City = userDto.City,[m
+[31m-                IsActive = userDto.IsActive,[m
+[31m-                Role = string.IsNullOrWhiteSpace(userDto.Role) ? "User" : userDto.Role[m
+[32m+[m[32m                City = userDto.City.Trim(),[m
+[32m+[m[32m                IsActive = true,[m
+[32m+[m[32m                Role = "User"[m
+             };[m
+ [m
+[32m+[m
+             var createdUser = await _userRepository.CreateAsync(user);[m
+             string token = GenerateJwtToken(createdUser);[m
+ [m
