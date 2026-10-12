@@ -200,9 +200,9 @@ namespace CompraCerca.API.Services
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category?.Name ?? string.Empty,
                 UserId = p.UserId,
-                UserName = p.User != null
-                    ? $"{p.User.FirstName} {p.User.LastName}"
-                    : string.Empty,
+                // UserName ya no navega p.User para evitar JOIN fallido en SQL Azure
+                // Se usa cadena vacía como fallback; el frontend muestra "Anónimo" cuando está vacío
+                UserName = string.Empty,
                 City = p.City,
                 IsActive = p.IsActive
             };
