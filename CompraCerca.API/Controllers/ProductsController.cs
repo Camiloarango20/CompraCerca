@@ -18,8 +18,7 @@ namespace CompraCerca.API.Controllers
             _productService = productService;
         }
 
-        // GET: api/Products
-        // Público: cualquier persona puede consultar productos
+        // GET: api/Products (Público: cualquier persona puede consultar productos)
         [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductResponseDto>>> GetProducts()
@@ -27,6 +26,19 @@ namespace CompraCerca.API.Controllers
             var products = await _productService.GetAllProductsAsync();
 
             return Ok(products);
+        }
+
+        // GET: api/Products/paged?pageNumber=1&pageSize=10&search=term&categoryId=5
+        // Con filtros: búsqueda, filtrado por categoría, paginación
+        [AllowAnonymous]
+        [HttpGet("paged")]
+        public async Task<ActionResult<PagedResultDto<ProductResponseDto>>> GetPagedProducts([FromQuery] ProductFilterDto filter)
+        {
+            if (filter == null) filter = new ProductFilterDto();
+
+            var pagedProducts = await _productService.GetPagedProductsAsync(filter);
+
+            return Ok(pagedProducts);
         }
 
         // GET: api/Products/5

@@ -142,6 +142,25 @@ app.UseAuthorization();
 // =====================================================
 // 11. RUTAS Y EJECUCIÓN
 // =====================================================
+// Sembrar base de datos solo en entorno Development
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<CompraCercaDbContext>();
+    var config = services.GetRequiredService<IConfiguration>();
+
+    try
+    {
+        DatabaseSeeder.SeedAsync(context, config).Wait();
+        Console.WriteLine("Seed de base de datos completado en modo Development.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error durante el seed: {ex.Message}");
+    }
+}
+
 app.MapControllers();
 
 app.Run();
