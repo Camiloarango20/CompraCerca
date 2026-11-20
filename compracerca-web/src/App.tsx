@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import AuthProvider from './context/AuthContext.tsx';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
+import { apiPath } from './api/apiUrl';
 
 // --- Catálogo dinámico (igual que la versión reciente) ---
 interface Product {
@@ -24,8 +25,7 @@ interface CatalogState {
 
 async function loadProductsAPI(): Promise<Product[]> {
     try {
-        const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:7115/api';
-        const response = await fetch(`${API_URL}/api/products`, {
+        const response = await fetch(apiPath('products'), {
             headers: {
                 'Content-Type': 'application/json',
             },
