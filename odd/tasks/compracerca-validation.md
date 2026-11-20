@@ -13,10 +13,10 @@ Runners: `dotnet test CompraCerca.slnx` · `npm test --prefix compracerca-web` �
 ## Tasks
 
 - T1 — S1, S3 — inline — status: done — frontend base URL + dev proxy + regression test — commit: `30294bc`
-- T2 — S3 — inline — status: pending — backend `AuthResponseDto.Expiration` + regression test — commit: pending
-- T3 — S4 — inline — status: pending — `GET /health` liveness endpoint — commit: pending
-- T4 — S2 — inline — status: pending — Dockerfile `PORT`, `.dockerignore`, vulnerable package — commit: pending
-- T5 — S5 — inline — status: pending — production smoke test and verified link — commit: none (validation only)
+- T2 — S3 — inline — status: done — backend `AuthResponseDto.Expiration` + regression test — commit: `094091e`
+- T3 — S4 — inline — status: done — `GET /health` liveness endpoint — commit: `5e60ce4`
+- T4 — S2 — inline — status: done — Dockerfile `PORT`, `.dockerignore`, vulnerable package — commit: `2ef8252`
+- T5 — S5 — inline — status: blocked — production smoke done; 500s need Render logs or read-only DB access — commit: none (validation only)
 
 ## Log
 
@@ -27,3 +27,7 @@ Runners: `dotnet test CompraCerca.slnx` · `npm test --prefix compracerca-web` �
 - **Findings** — (1) `App.tsx:27-28` appends `/api/products` to a base already ending in `/api`, while `axiosClient.ts:3-6` uses the base correctly; (2) `interfaces/auth.ts:15-20` expects `expiration`, absent from `AuthResponseDto.cs:5-8`; (3) no health endpoint; (4) `Dockerfile:1-26` does not consume `PORT`; (5) vulnerable transitive `System.Security.Cryptography.Pkcs 9.0.11`.
 - **Route** — All tasks inline. No writer trigger: units are small/understood and the parent owns the single working tree and all git operations.
 - **T1 evidence** — RED: `Cannot find module './apiUrl'` from `src/api/apiUrl.test.ts`. GREEN after implementing `apiUrl.ts` and updating both call sites: `npm test` 3/3, `npm run build` OK, `npm run lint` OK. Commit `30294bc`.
+- **T2 evidence** — RED: 2 failing xUnit tests (`Expiration` property missing; JSON lacks `expiration`). GREEN: 3/3 after adding `AuthResponseDto.Expiration` and returning the JWT expiry from `GenerateJwtToken` in both register and login. Commit `094091e`.
+- **T3 evidence** — RED: `GET /health` returned 404 via `WebApplicationFactory<Program>`. GREEN: 4/4 after `AddHealthChecks()` and `MapHealthChecks("/health")`. Liveness only, no Azure SQL check, per S4 decision. Commit `5e60ce4`.
+- **T4 evidence** — Independent verifier PASS over baseline `5e60ce4` in isolated temp scratch: `dotnet test` 4/4, Release build 0 warnings, `dotnet list --vulnerable` clean, `npm test` 3/3, `npm run build` OK, `npm run lint` OK, `/health` 200 with DB unreachable, PORT override probe 200. Container build/run unavailable (`docker`/`sh` absent on PATH) and preserved as unavailable, not scored. Commit `2ef8252`.
+- **T5 evidence 2026-11-20** — User supplied `https://compracerca.onrender.com`. Read-only smoke: `/swagger/index.html` 200, `/WeatherForecast` 200, `/health` 404 (deploy still at `d200ac1`, fix not pushed), `/api/products` 500 and `/api/categories` 500 with generic body `{"statusCode":500,"message":"Ocurrió un error interno en el servidor.","details":null,...}`. Not change-caused: fixes are local and undeployed. Blocked on Render error logs (redacted) or authorized read-only DB inspection.
