@@ -86,6 +86,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // =====================================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHealthChecks();
 
 // =====================================================
 // 6. SWAGGER + JWT BEARER
@@ -143,5 +144,8 @@ app.UseAuthorization();
 // 11. RUTAS Y EJECUCIÓN
 // =====================================================
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
+
+public partial class Program { }
