@@ -43,14 +43,15 @@ namespace CompraCerca.API.Services
 
 
             var createdUser = await _userRepository.CreateAsync(user);
-            string token = GenerateJwtToken(createdUser);
+            var (token, expires) = GenerateJwtToken(createdUser);
 
             var response = new AuthResponseDto
             {
                 Token = token,
                 Email = createdUser.Email,
                 UserName = $"{createdUser.FirstName} {createdUser.LastName}",
-                Role = createdUser.Role
+                Role = createdUser.Role,
+                Expiration = expires.ToString("o")
             };
 
             return (response, null);
@@ -75,20 +76,21 @@ namespace CompraCerca.API.Services
                 return (null, "El usuario está inactivo.");
             }
 
-            string token = GenerateJwtToken(user);
+            var (token, expires) = GenerateJwtToken(user);
 
             var response = new AuthResponseDto
             {
                 Token = token,
                 Email = user.Email,
                 UserName = $"{user.FirstName} {user.LastName}",
-                Role = user.Role
+                Role = user.Role,
+                Expiration = expires.ToString("o")
             };
 
             return (response, null);
         }
 
-        private string GenerateJwtToken(User user)
+        private (string Token, DateTime Expires) GenerateJwtToken(User user)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
@@ -103,10 +105,12 @@ namespace CompraCerca.API.Services
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
+            var expires = DateTime.UtcNow.AddHours(8);
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(8),
+                Expires = expires,
                 Issuer = jwtSettings["Issuer"],
                 Audience = jwtSettings["Audience"],
                 SigningCredentials = new SigningCredentials(
@@ -117,7 +121,7 @@ namespace CompraCerca.API.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            return tokenHandler.WriteToken(token);
+            return (tokenHandler.WriteToken(token), expires);
         }
     }
 }
