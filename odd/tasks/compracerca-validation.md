@@ -12,7 +12,7 @@ Runners: `dotnet test CompraCerca.slnx` · `npm test --prefix compracerca-web` �
 
 ## Tasks
 
-- T1 — S1, S3 — inline — status: pending — frontend base URL + dev proxy + regression test — commit: pending
+- T1 — S1, S3 — inline — status: done — frontend base URL + dev proxy + regression test — commit: `30294bc`
 - T2 — S3 — inline — status: pending — backend `AuthResponseDto.Expiration` + regression test — commit: pending
 - T3 — S4 — inline — status: pending — `GET /health` liveness endpoint — commit: pending
 - T4 — S2 — inline — status: pending — Dockerfile `PORT`, `.dockerignore`, vulnerable package — commit: pending
@@ -26,3 +26,4 @@ Runners: `dotnet test CompraCerca.slnx` · `npm test --prefix compracerca-web` �
 - **Evidence 2026-11-20** — Upstream `main` at `d200ac1`; local ZIP export at `E:\compraCerca\CompraCerca-main\CompraCerca-main`; clone at `E:\compraCerca\CompraCerca`. Baseline build: API `dotnet build` OK with NU1902/NU1903 for `System.Security.Cryptography.Pkcs 9.0.11`; frontend `npm install`, `npm run build`, `npm run lint` OK; API smoke `/swagger/index.html`, `/swagger/v1/swagger.json`, `/WeatherForecast` returned HTTP 200. No test project and no health endpoint existed at baseline.
 - **Findings** — (1) `App.tsx:27-28` appends `/api/products` to a base already ending in `/api`, while `axiosClient.ts:3-6` uses the base correctly; (2) `interfaces/auth.ts:15-20` expects `expiration`, absent from `AuthResponseDto.cs:5-8`; (3) no health endpoint; (4) `Dockerfile:1-26` does not consume `PORT`; (5) vulnerable transitive `System.Security.Cryptography.Pkcs 9.0.11`.
 - **Route** — All tasks inline. No writer trigger: units are small/understood and the parent owns the single working tree and all git operations.
+- **T1 evidence** — RED: `Cannot find module './apiUrl'` from `src/api/apiUrl.test.ts`. GREEN after implementing `apiUrl.ts` and updating both call sites: `npm test` 3/3, `npm run build` OK, `npm run lint` OK. Commit `30294bc`.
